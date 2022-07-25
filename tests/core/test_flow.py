@@ -2269,7 +2269,7 @@ class TestFlowRunMethod:
         f = Flow(name="test", tasks=[t], schedule=schedule)
         f.run()
         assert t.call_count == 2
-        assert len(state_history) == 5  # Running, Failed, Retrying, Running, Success
+        assert len(state_history) == 4  # Running, Retrying, Running, Success
 
     def test_flow_dot_run_handles_cached_states(self, repeat_schedule):
         schedule = repeat_schedule(3)
@@ -2620,9 +2620,9 @@ class TestFlowRunMethod:
         assert all([s.is_successful() for s in flow_state.result[res].map_states])
         assert res.call_count == 4
         # Pending -> Mapped (parent)
-        # Pending -> Running -> Failed -> Retrying -> Running -> Successful (failed child)
+        # Pending -> Running -> Retrying -> Running -> Successful (failed child)
         # (Pending -> Running -> Success) * 2 (others)
-        assert len(state_history) == 10
+        assert len(state_history) == 9
 
     def test_flow_run_accepts_state_kwarg(self):
         f = Flow(name="test")
@@ -2986,8 +2986,6 @@ def test_pause_resume_works_with_retries():
     def state_handler(obj, old, new):
         if isinstance(new, Paused):
             return Resume()
-        elif old.is_running():
-            raise FAIL("cant pass go")
 
     @task(
         max_retries=2,
@@ -2997,6 +2995,7 @@ def test_pause_resume_works_with_retries():
     )
     def fail():
         runs.append(1)
+        raise FAIL("cant pass go")
 
     f = Flow("huh", tasks=[fail])
     flow_state = f.run()

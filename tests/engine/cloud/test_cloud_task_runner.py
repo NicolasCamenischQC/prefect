@@ -638,8 +638,8 @@ def test_task_runner_performs_retries_for_short_delays(client):
         client.get_task_run_info.call_count == 2
     )  # called once normally and once on the retry
     assert (
-        client.set_task_run_state.call_count == 5
-    )  # Pending -> Running -> Failed -> Retrying -> Running -> Success
+        client.set_task_run_state.call_count == 4
+    )  # Pending -> Running -> Retrying -> Running -> Success
     versions = [
         call[1]["version"]
         for call in client.set_task_run_state.call_args_list
@@ -734,8 +734,8 @@ def test_task_runner_handles_looping_with_retries_with_no_result(client):
     assert res.is_successful()
     assert client.get_task_run_info.call_count == 4
     assert (
-        client.set_task_run_state.call_count == 9
-    )  # Pending -> Running -> Looped (1) -> Running -> Failed -> Retrying -> Running -> Looped(2) -> Running -> Success
+        client.set_task_run_state.call_count == 8
+    )  # Pending -> Running -> Looped (1) -> Running -> Retrying -> Running -> Looped(2) -> Running -> Success
     versions = [
         call[1]["version"]
         for call in client.set_task_run_state.call_args_list
@@ -773,8 +773,8 @@ def test_task_runner_handles_looping_with_retries(client):
     assert res.is_successful()
     assert client.get_task_run_info.call_count == 4
     assert (
-        client.set_task_run_state.call_count == 9
-    )  # Pending -> Running -> Looped (1) -> Running -> Failed -> Retrying -> Running -> Looped(2) -> Running -> Success
+        client.set_task_run_state.call_count == 8
+    )  # Pending -> Running -> Looped (1) -> Running -> Retrying -> Running -> Looped(2) -> Running -> Success
     versions = [
         call[1]["version"]
         for call in client.set_task_run_state.call_args_list
@@ -818,7 +818,7 @@ def test_cloud_task_runner_handles_retries_with_queued_states_from_cloud(client)
     def queued_mock(*args, **kwargs):
         calls.append(kwargs)
         # first retry attempt will get queued
-        if len(calls) == 4:
+        if len(calls) == 3:
             return Queued()  # immediate start time
         else:
             return kwargs.get("state")
@@ -844,12 +844,9 @@ def test_cloud_task_runner_handles_retries_with_queued_states_from_cloud(client)
 
     assert res.is_successful()
     assert res.result == 42
-    assert (
-        len(calls) == 6
-    )  # Running -> Failed -> Retrying -> Queued -> Running -> Success
+    assert len(calls) == 5  # Running -> Retrying -> Queued -> Running -> Success
     assert [type(c["state"]).__name__ for c in calls] == [
         "Running",
-        "Failed",
         "Retrying",
         "Running",
         "Running",

@@ -299,9 +299,6 @@ class TaskRunner(Runner):
                 # cache the output, if appropriate
                 state = self.cache_result(state, inputs=task_inputs)
 
-                # check if the task needs to be retried
-                state = self.check_for_retry(state, inputs=task_inputs)
-
                 state = self.check_task_is_looping(
                     state,
                     inputs=task_inputs,
@@ -904,6 +901,20 @@ class TaskRunner(Runner):
             assert isinstance(new_state, Success)
             value = new_state.result
 
+        except signals.FAIL as exc:
+            raise_on_exception = prefect.context.get("raise_on_exception", False)
+            self.logger.info(
+                "{name} signal raised: {rep}".format(
+                    name=type(exc).__name__, rep=repr(exc)
+                )
+            )
+            if raise_on_exception:
+                raise exc
+
+            fail_state = exc.state
+            # check if the task needs to be retried
+            return self.check_for_retry(fail_state, inputs=inputs)
+
         except Exception as exc:  # Handle exceptions in the task
             if prefect.context.get("raise_on_exception"):
                 raise
@@ -911,8 +922,10 @@ class TaskRunner(Runner):
                 f"Task {task_name!r}: Exception encountered during task execution!",
                 exc_info=True,
             )
-            state = Failed(f"Error during execution of task: {exc!r}", result=exc)
-            return state
+
+            fail_state = Failed(f"Error during execution of task: {exc!r}", result=exc)
+            # check if the task needs to be retried
+            return self.check_for_retry(fail_state, inputs=inputs)
 
         # checkpoint tasks if a result is present, except for when the user has opted out by
         # disabling checkpointing
@@ -979,7 +992,6 @@ class TaskRunner(Runner):
 
         return state
 
-    @call_state_handlers
     def check_for_retry(self, state: State, inputs: Dict[str, Result]) -> State:
         """
         Checks to see if a FAILED task should be retried.

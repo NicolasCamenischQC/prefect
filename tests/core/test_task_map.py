@@ -1024,8 +1024,8 @@ class TestLooping:
 
         # finally assert that retries actually ocurred correctly
         # Pending -> Mapped (parent)
-        # (Pending -> (Running -> Looped) * 2 -> Running -> Failed -> Retrying -> Running -> Successful) * 2
-        assert len(state_history) == 19
+        # (Pending -> (Running -> Looped) * 2 -> Running -> Retrying -> Running -> Successful) * 2
+        assert len(state_history) == 17
 
 
 class TestFlatMap:

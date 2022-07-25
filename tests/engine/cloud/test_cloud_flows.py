@@ -513,12 +513,12 @@ def test_simple_three_task_flow_with_first_task_retrying(monkeypatch, executor):
     assert state.is_running()
     assert client.flow_runs[flow_run_id].state.is_running()
     assert isinstance(client.task_runs[task_run_id_1].state, Retrying)
-    assert client.task_runs[task_run_id_1].version == 3
+    assert client.task_runs[task_run_id_1].version == 2
     assert client.task_runs[task_run_id_2].state.is_pending()
     assert client.task_runs[task_run_id_2].version == 0
     assert client.task_runs[task_run_id_3].state.is_pending()
     assert client.task_runs[task_run_id_2].version == 0
-    assert client.call_count["set_task_run_state"] == 3
+    assert client.call_count["set_task_run_state"] == 2
 
 
 def test_simple_map(monkeypatch):

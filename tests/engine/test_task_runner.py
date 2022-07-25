@@ -1789,8 +1789,8 @@ class TestTaskStateHandlers:
             1 / 0
 
         TaskRunner(task=fn).run()
-        # the task changed state three times: Pending -> Running -> Failed -> Retry
-        assert task_handler.call_count == 3
+        # the task changed state two times: Pending -> Running -> Retry
+        assert task_handler.call_count == 2
 
     def test_task_handlers_can_return_none(self):
         task_handler = MagicMock(side_effect=lambda t, o, n: None)
@@ -1802,8 +1802,8 @@ class TestTaskStateHandlers:
             1 / 0
 
         TaskRunner(task=fn).run()
-        # the task changed state three times: Pending -> Running -> Failed -> Retry
-        assert task_handler.call_count == 3
+        # the task changed state two times: Pending -> Running -> Retry
+        assert task_handler.call_count == 2
 
     def test_task_handlers_are_called_on_failure(self):
         task_handler = MagicMock(side_effect=lambda t, o, n: n)
@@ -1903,9 +1903,9 @@ class TestTaskRunnerStateHandlers:
             1 / 0
 
         state = TaskRunner(task=fn, state_handlers=[task_runner_handler]).run()
-        # the task changed state three times: Pending -> Running -> Failed -> Retry
+        # the task changed state two times: Pending -> Running -> Retry
         assert state.is_retrying()
-        assert task_runner_handler.call_count == 3
+        assert task_runner_handler.call_count == 2
 
     def test_task_runner_handlers_are_called_on_triggerfailed(self):
         task_runner_handler = MagicMock(side_effect=lambda t, o, n: n)
